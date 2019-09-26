@@ -45,8 +45,6 @@ def handle_quota_request_update(body, logger, **_):
 
 @kopf.on.delete(operator_domain, operator_version, 'quotarequests')
 def handle_quota_request_delete(body, logger, **_):
-    name = quota_request['metadata']['name']
-    namespace = quota_request['metadata']['namespace']
     pass
 
 def handle_quota_request_reconcile(quota_request, logger):

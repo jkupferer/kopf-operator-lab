@@ -5,9 +5,27 @@ Kubernetes Operator Pythonic Framework (Kopf)
 A Python framework to write Kubernetes operators in just few lines of code.
 
 https://kopf.readthedocs.io/[Kopf Documentation]
+
 https://github.com/zalando-incubator/kopf/[Koph GitHub Repository]
 
+https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/CoreV1Api.md[Kubernetes Core V1 API]
+
+https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/CustomObjectsApi.md[Kubernetes Custom Objects API]
+
 ## Lab Setup
+
+https://www.opentlc.com/gg/gg.cgi?profile=generic_rhte[GUID Grabber]
+
+Lab Code: A2031 - Operationalizing OpenShift with GitOps
+
+... or use your own cluster.
+
+Clone this git repository:
+
+--------------------------------------------------------------------------------
+git clone https://github.com/jkupferer/kopf-operator-lab.git
+cd kopf-operator-lab/
+--------------------------------------------------------------------------------
 
 Install Python 3.7 and Kopf:
 
@@ -16,21 +34,43 @@ sudo operator/python3-install.sh
 sudo /usr/local/bin/pip3 install kopf kubernetes
 --------------------------------------------------------------------------------
 
-## Demo Setup
+## Example Operator Overview
+
+The example operator implements a couple use cases.
+It automatically creates ClusterResourceQuotas for users by creating a `ClusterResourceQuota` for each user.
+It also allows users to create `QuotaRequests` in their namespaces which then manage `ResourceQuotas`.
+
+## Example Operator Setup
+
+Create `example-operator` project namespace:
 
 --------------------------------------------------------------------------------
 oc new-project example-operator
+--------------------------------------------------------------------------------
+
+Deploy Operator using the provided templates:
+
+--------------------------------------------------------------------------------
 oc process -p NAMESPACE=example-operator -f build-template.yaml | oc apply -f -
 oc process -p NAMESPACE=example-operator -f deploy-template.yaml | oc apply -f -
+--------------------------------------------------------------------------------
+
+Create initial configuration for operator:
+
+--------------------------------------------------------------------------------
 oc create -f default-user-quota-config.yaml
 --------------------------------------------------------------------------------
 
 ## Local run for quick testing
 
+The kopf operator can be run locally with:
+
 --------------------------------------------------------------------------------
 $ kopf run --standalone operator/operator.py 
 [2019-09-26 11:30:00,474] kopf.objects         [INFO    ] [None/andrew] Handler 'handle_user_event' succeeded.
 --------------------------------------------------------------------------------
+
+Login as a user, and then verify that a ClusterResourceQuota has been created:
 
 --------------------------------------------------------------------------------
 $ oc get clusterresourcequota andrew -o yaml
@@ -55,10 +95,20 @@ spec:
 
 ## OpenShift Build Support
 
+Kopf can be built with an OpenShift build using a Dockerfile:
+
 --------------------------------------------------------------------------------
 oc start-build --from-dir=. example --follow --wait
 --------------------------------------------------------------------------------
 
 ## Quay.io Integration
 
+Quay.io can also build Dockerfile builds, even supporting automatic triggers:
+
+--------------------------------------------------------------------------------
 https://quay.io/repository/jkupferer/kopf-operator-lab?tab=tags
+--------------------------------------------------------------------------------
+
+## Lab Exercise
+
+Implement `handle_quota_request_delete`.
