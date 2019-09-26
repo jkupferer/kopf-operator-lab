@@ -1,0 +1,8 @@
+apiVersion: example.redhat.com/v1
+kind: QuotaRequest
+metadata:
+  name: compute-resources
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 1Gi

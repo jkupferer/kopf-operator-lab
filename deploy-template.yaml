@@ -56,6 +56,40 @@ objects:
                 description: Quota definition for ClusterResourceQuota
                 type: object
 
+- apiVersion: apiextensions.k8s.io/v1beta1
+  kind: CustomResourceDefinition
+  metadata:
+    name: quotarequests.${OPERATOR_DOMAIN}
+  spec:
+    group: ${OPERATOR_DOMAIN}
+    version: v1
+    scope: Namespaced
+    names:
+      plural: quotarequests
+      singular: quotarequest
+      kind: QuotaRequest
+      shortNames: []
+    validation:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: apiVersion must be "${OPERATOR_DOMAIN}/v1"
+            type: string
+            enum: ['${OPERATOR_DOMAIN}/v1']
+          kind:
+            description: kind must be "QuotaRequest"
+            type: string
+            enum: ['QuotaRequest']
+          metadata:
+            description: Standard object metadata.
+            type: object
+          spec:
+            description: spec holds user settable values for configuration
+            properties:
+              hard:
+                description: Quota definition for ResourceQuota
+                type: object
+
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRole
   metadata:
@@ -68,6 +102,18 @@ objects:
     verbs:
     - get
     - list
+    - watch
+  - apiGroups:
+    - ${OPERATOR_DOMAIN}
+    resources:
+    - quotarequests
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
     - watch
   - apiGroups:
     - user.openshift.io
@@ -93,10 +139,42 @@ objects:
   - apiGroups:
     - ""
     resources:
+    - resourcequotas
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+  - apiGroups:
+    - ""
+    resources:
     - events
     verbs:
     - create
     - patch
+    - update
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: ${SERVICE_NAME}-aggregate-to-admin
+    labels:
+      rbac.authorization.k8s.io/aggregate-to-admin: "true"
+  rules:
+  - apiGroups:
+    - ${OPERATOR_DOMAIN}
+    resources:
+    - quotarequests
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - watch
     - update
 
 - apiVersion: rbac.authorization.k8s.io/v1

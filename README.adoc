@@ -16,7 +16,7 @@ sudo operator/python3-install.sh
 sudo /usr/local/bin/pip3 install kopf kubernetes
 --------------------------------------------------------------------------------
 
-## Demo
+## Demo Setup
 
 --------------------------------------------------------------------------------
 oc new-project example-operator
@@ -24,6 +24,8 @@ oc process -p NAMESPACE=example-operator -f build-template.yaml | oc apply -f -
 oc process -p NAMESPACE=example-operator -f deploy-template.yaml | oc apply -f -
 oc create -f default-user-quota-config.yaml
 --------------------------------------------------------------------------------
+
+## Local run for quick testing
 
 --------------------------------------------------------------------------------
 $ kopf run --standalone operator/operator.py 
@@ -51,6 +53,12 @@ spec:
       openshift.io/requester: andrew
 --------------------------------------------------------------------------------
 
+## OpenShift Build Support
+
 --------------------------------------------------------------------------------
 oc start-build --from-dir=. example --follow --wait
 --------------------------------------------------------------------------------
+
+## Quay.io Integration
+
+https://quay.io/repository/jkupferer/kopf-operator-lab?tab=tags

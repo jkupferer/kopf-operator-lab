@@ -35,6 +35,47 @@ def get_user_quota_config(name, logger):
         else:
             raise
 
+@kopf.on.create(operator_domain, operator_version, 'quotarequests')
+def handle_quota_request_create(body, logger, **_):
+    handle_quota_request_reconcile(body, logger)
+
+@kopf.on.update(operator_domain, operator_version, 'quotarequests')
+def handle_quota_request_update(body, logger, **_):
+    handle_quota_request_reconcile(body, logger)
+
+@kopf.on.delete(operator_domain, operator_version, 'quotarequests')
+def handle_quota_request_delete(body, logger, **_):
+    name = quota_request['metadata']['name']
+    namespace = quota_request['metadata']['namespace']
+    pass
+
+def handle_quota_request_reconcile(quota_request, logger):
+    name = quota_request['metadata']['name']
+    namespace = quota_request['metadata']['namespace']
+    try:
+        quota = core_v1_api.read_namespaced_resource_quota(name, namespace)
+        if quota.spec.hard != quota_request['spec']['hard']:
+            quota.spec.hard = quota_request['spec']['hard']
+            core_v1_api.replace_namespaced_resource_quota(name, namespace, quota)
+            logger.info('updated ResourceQuota')
+    except kubernetes.client.rest.ApiException as e:
+        if e.status == 404:
+            core_v1_api.create_namespaced_resource_quota(
+                namespace,
+                kubernetes.client.V1ResourceQuota(
+                    metadata = kubernetes.client.V1ObjectMeta(
+                        name = name,
+                        namespace = namespace
+                    ),
+                    spec = kubernetes.client.V1ResourceQuotaSpec(
+                        hard = quota_request['spec']['hard']
+                    )
+                )
+            )
+            logger.info('created ResourceQuota')
+        else:
+            raise
+
 @kopf.on.event('user.openshift.io', 'v1', 'users')
 def handle_user_event(event, logger, **_):
     user = event['object']
