@@ -1,0 +1,9 @@
+apiVersion: example.redhat.com/v1
+kind: UserQuotaConfig
+metadata:
+  name: default
+spec:
+  quota:
+    hard:
+      requests.cpu: "4"
+      requests.memory: 16Gi

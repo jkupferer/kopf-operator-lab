@@ -1,0 +1,113 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  annotations:
+    description: poolboy deploy
+  name: poolboy-deploy
+
+parameters:
+- name: NAMESPACE
+  value: example-operator
+- name: IMAGE
+  #value: quay.io/jkupferer/example-operator:latest
+  #value: docker-registry.default.svc:5000/example-operator/example:latest
+  value: image-registry.openshift-image-registry.svc:5000/example-operator/example:latest
+- name: IMAGE_PULL_POLICY
+  #value: IfNotPresent
+  value: Always
+- name: SERVICE_NAME
+  value: example
+- name: OPERATOR_DOMAIN
+  value: example.redhat.com
+
+objects:
+- apiVersion: apiextensions.k8s.io/v1beta1
+  kind: CustomResourceDefinition
+  metadata:
+    name: userquotaconfigs.${OPERATOR_DOMAIN}
+  spec:
+    group: ${OPERATOR_DOMAIN}
+    version: v1
+    scope: Cluster
+    names:
+      plural: userquotaconfigs
+      singular: userquotaconfig
+      kind: UserQuotaConfig
+      shortNames: []
+    validation:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: apiVersion must be "${OPERATOR_DOMAIN}/v1"
+            type: string
+            enum: ['${OPERATOR_DOMAIN}/v1']
+          kind:
+            description: kind must be "UserQuotaConfig"
+            type: string
+            enum: ['UserQuotaConfig']
+          metadata:
+            description: Standard object metadata.
+            type: object
+          spec:
+            description: spec holds user settable values for configuration
+            properties:
+              quota:
+                description: Quota definition for ClusterResourceQuota
+                type: object
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: ${SERVICE_NAME}
+  rules:
+  - apiGroups:
+    - ${OPERATOR_DOMAIN}
+    resources:
+    - userquotaconfigs
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - user.openshift.io
+    resources:
+    - users
+    - identities
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - quota.openshift.io
+    resources:
+    - clusterresourcequotas
+    verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+  - apiGroups:
+    - ""
+    resources:
+    - events
+    verbs:
+    - create
+    - patch
+    - update
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: ${SERVICE_NAME}
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: ${SERVICE_NAME}
+  subjects:
+  - kind: ServiceAccount
+    name: ${SERVICE_NAME}
+    namespace: ${NAMESPACE}
